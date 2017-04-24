@@ -20,11 +20,35 @@ func TestSolution(t *testing.T) {
 		{
 			input: []int{1, 2, 3},
 		},
+		{
+			input: []int{1, 2},
+		},
+		{
+			input: []int{2, 1},
+		},
+		{
+			input: []int{-1, 0},
+		},
+		{
+			input: []int{0, -8},
+		},
+		{
+			input: []int{1, 3, 5, 7, 2},
+		},
+		{
+			input: []int{2, 4, 6, 2, 1},
+		},
+		{
+			input: []int{1, -3, 6, -1, 3},
+		},
+		{
+			input: []int{1, -3, 6, -1, 3, 4, 14, 99, 102, 101, 4351, 0, 18, 21, 88},
+		},
 	}
 
 	for index, ts := range scenarios {
-		ret := teaser.Solve(ts.input)
-		if err := assertSolution(ret, t); err != nil {
+		output := teaser.Solve(ts.input)
+		if err := assertSolution(output, t); err != nil {
 			t.Fatalf("scenario %d, unexpected error returned = %v, input was = %v", index, err, ts.input)
 		}
 	}
