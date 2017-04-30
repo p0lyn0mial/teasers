@@ -23,14 +23,14 @@ import (
 // Extra points: Do you see any problems with running this kind of queue in a
 // production envrionment?
 // TODO: get the extra points by providing an answer
-type queue struct {
+type Queue struct {
 	head *node
 	tail *node
 }
 
 // New returns a new instance of the queuing system.
-func New() *queue {
-	return &queue{head: sentinel(), tail: sentinel()}
+func New() *Queue {
+	return &Queue{head: sentinel(), tail: sentinel()}
 }
 
 // Add adds a message to the queue and returns
@@ -39,13 +39,14 @@ func New() *queue {
 // note:
 //  passing the same message yields two different ids
 //  messages of size greater than 1024 will be rejected
-func (q *queue) Add(msg string) string {
-	if len(msg) > 1024 {
+//
+// this method is considered thread unsafe
+func (q *Queue) Add(msg string) string {
+	if len(msg) > 1024 || len(msg) == 0 {
 		return ""
 	}
-	//TODO: add locking
-	uid := uuid.NewV4()
 
+	uid := uuid.NewV4()
 	oldtail := q.tail
 	q.tail = &node{data: msg, id: uid.String(), next: sentinel()}
 	if q.isEmpty() {
@@ -57,13 +58,14 @@ func (q *queue) Add(msg string) string {
 	return uid.String()
 }
 
-// View returns a message in FIFO order and a sha-256 of the next message in the queue.
+// View returns a message id in FIFO order and a sha-256 of the next message in the queue.
 // Returned message will be invisible for 1 second for others.
 //
 // note this method uses a timestamp of type time.Now to determine if a message can be seen.
 // the timestamp should not be considered monotonic, time can drift.
-func (q *queue) View() (hash string, uuid string) {
-	//TODO: add locking
+//
+// this method is considered thread unsafe
+func (q *Queue) View() (hash string, id string) {
 	if q.isEmpty() {
 		return "", ""
 	}
@@ -84,17 +86,40 @@ func (q *queue) View() (hash string, uuid string) {
 
 // Delete deletes a message from the queue. Returns true if the message was
 // removed within 1 second or false if we were too slow.
-func (q *queue) Delete(uuid string) bool {
-	// TODO: add locking
+//
+// this method is considered thread unsafe
+func (q *Queue) Delete(id string) bool {
 	if q.isEmpty() {
 		return false
 	}
-	// TODO: input sanitization
-	return false
+	_, err := uuid.FromString(id)
+	if err != nil {
+		return false
+	}
+
+	n := q.head
+	found := false
+	elapsed := time.Now()
+	for {
+		if n.isSentinel() {
+			break
+		}
+		if n.id == id {
+			q.head = n.next
+			found = true
+			break
+		} else if n.next.id == id {
+			n.next = n.next.next
+			found = true
+			break
+		}
+		n = n.next
+	}
+	return found && time.Since(elapsed).Seconds() < float64(1)
 }
 
 // isEmpty determines whether the queue is empty
-func (q *queue) isEmpty() bool {
+func (q *Queue) isEmpty() bool {
 	return q.head.isSentinel()
 }
 
