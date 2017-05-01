@@ -183,6 +183,48 @@ func TestAddManyViewMany(t *testing.T) {
 
 }
 
+// TestRemoveFromEmptyQueue checks if a message cannot be deleted from
+// an empty queue
+func TestRemoveFromEmptyQueue(t *testing.T) {
+	target := teaser.New()
+	deleted := target.Delete("6e0c9774-2674-4c6f-906e-6ccaebad3772")
+	if deleted {
+		t.Fatal("deleting from an empty queue should not be possbile!")
+	}
+}
+
+// TestViewFromEmptyQueue checks if no message is returned from an empty queue.
+func TestViewFromEmptyQueue(t *testing.T) {
+	target := teaser.New()
+	nextHash, mid := target.View()
+	if len(nextHash) > 0 || len(mid) > 0 {
+		t.Fatal("cannot get a messae from an empty queue")
+	}
+}
+
+// TestRemoveAllAddOne checks if a message can be added
+// after all being removed.
+func TestRemoveAllAddOne(t *testing.T) {
+	target := teaser.New()
+	m1id := target.Add("msg1")
+	m2id := target.Add("msg2")
+
+	{
+		deleted := target.Delete(m1id)
+		assertDeleted(m1id, deleted, t)
+	}
+
+	{
+		deleted := target.Delete(m2id)
+		assertDeleted(m2id, deleted, t)
+	}
+
+	m3id := target.Add("msg3")
+	nextHash, m3vid := target.View()
+	assertMessageId(m3id, m3vid, t)
+	assertMessageHash("", nextHash, t)
+}
+
 func assertMessageId(actual, expected string, t *testing.T) {
 	if actual != expected {
 		t.Fatalf("mismatch of added msg id = %s, and viewed msg id = %s", actual, expected)
