@@ -22,7 +22,18 @@ import (
 //
 // Extra points: Do you see any problems with running this kind of queue in a
 // production envrionment?
-// TODO: get the extra points by providing an answer
+//
+//  Issue 1: unable to view a content of a message. The View method returns
+//  an id of the message and the hash of a content of the next message. How can one read
+//  a content of a message in this case?
+//
+//  Issue 2: you cannot be sure if a message was deleted or not. The Delete method returns
+//  boolean value so you really don't know whether something went wrong
+//  or perhaps you didn't fit in 1 second time window.
+//
+//  Issue 3: there is no guarantee that a message will not be read by others.
+//  Given that one will call View() followed by immediate Delete().
+//  network delays and packet reordering are not your friends.
 type Queue struct {
 	head *node
 	tail *node
